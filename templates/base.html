@@ -9,6 +9,14 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='vagzlumauto-icon.png') }}">
 </head>
 <body>
+<div class="floating-parts" aria-hidden="true">
+  <img class="float-part part-engine" src="{{ url_for('static', filename='floating/engine.svg') }}" alt="">
+  <img class="float-part part-wheel" src="{{ url_for('static', filename='floating/wheel.svg') }}" alt="">
+  <img class="float-part part-brake" src="{{ url_for('static', filename='floating/brake.svg') }}" alt="">
+  <img class="float-part part-piston" src="{{ url_for('static', filename='floating/piston.svg') }}" alt="">
+  <img class="float-part part-fender" src="{{ url_for('static', filename='floating/fender.svg') }}" alt="">
+  <img class="float-part part-spring" src="{{ url_for('static', filename='floating/spring.svg') }}" alt="">
+</div>
 <header class="nav">
   <a class="brand" href="{{ url_for('home') }}"><b>🚘</b><span>{{ site.brand_name }}<small>{{ site.title }}</small></span></a>
   <button class="mobile-menu-btn" type="button" aria-label="Відкрити меню" aria-expanded="false">☰</button>
@@ -23,7 +31,6 @@
   <div class="nav-actions">
     <a class="call js-call-modal" href="#">☎ Зателефонувати</a>
     {% if current_user %}
-      {% if current_user.role == 'admin' %}<a class="login admin-login" href="{{ url_for('admin') }}">Адмінка</a>{% endif %}
       <a class="login" href="{{ url_for('logout') }}">Вийти</a>
     {% else %}
       <a class="login" href="{{ url_for('login') }}">Увійти</a>
