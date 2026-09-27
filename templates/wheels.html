@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Колеса та диски — {{ site.brand_name }}{% endblock %}
+{% block content %}
+<section class="contact-page blue">
+  <div class="eyebrow">Колеса</div>
+  <div class="big-icon">◉</div>
+  <h1>Колеса та диски</h1>
+  <p>{{ text.get("wheels_text", "Б/у колеса, диски та титани. Підберемо комплект під ваш автомобіль.") }}</p>
+  <div class="contact-card">
+    <div class="circle">☎</div>
+    <h2>Зателефонуйте нам — допоможемо підібрати колеса та диски</h2>
+    <p>Підкажемо наявність, розмір, сумісність та актуальну ціну.</p>
+    <a class="btn green js-call-modal" href="#">☎ Зателефонувати нам</a>
+    <div class="contact-bottom">📍 {{ site.city }} · ☎ {{ config_phones[0].display if config_phones else "" }}</div>
+  </div>
+</section>
+{% endblock %}

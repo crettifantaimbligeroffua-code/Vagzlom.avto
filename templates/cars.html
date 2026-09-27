@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ picker.get("title", "Підібрати авто") }} — {{ site.name }}{% endblock %}
+{% block content %}
+<section class="page-head catalog-head">
+  <div class="eyebrow">{{ text.get("catalog", "Каталог") }}</div>
+  <h1>{{ picker.get("title", "Підібрати авто") }}</h1>
+  <p>{{ picker.get("subtitle", "Оберіть марку та модель автомобіля") }}</p>
+</section>
+
+<section class="car-picker-box">
+  <form class="car-picker-form" method="get" action="{{ url_for('cars') }}" id="carPickerForm">
+    <label>
+      <span>{{ picker.get("brand_label", "Марка") }}</span>
+      <select name="brand" id="brandSelect" required>
+        <option value="">{{ picker.get("brand_placeholder", "Оберіть марку") }}</option>
+        {% for brand in brands %}
+          <option value="{{ brand }}" {% if selected_brand|lower == brand|lower %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      <span>{{ picker.get("model_label", "Модель") }}</span>
+      <select name="model" id="modelSelect" required disabled>
+        <option value="">{{ picker.get("model_placeholder", "Оберіть модель") }}</option>
+      </select>
+    </label>
+
+    <button class="btn red picker-submit" type="submit">{{ picker.get("search_button", "🔎 Шукати") }}</button>
+  </form>
+</section>
+
+{% if selected_brand or selected_model %}
+<section class="search-result-head">
+  <div>
+    <div class="eyebrow">{{ picker.get("result_title", "Результат пошуку") }}</div>
+    <h2>{{ selected_brand }}{% if selected_model %} — {{ selected_model }}{% endif %}</h2>
+  </div>
+  <a class="btn" href="{{ url_for('cars') }}">{{ picker.get("reset_button", "Скинути пошук") }}</a>
+</section>
+{% endif %}
+
+{% if not selected_brand and not selected_model %}
+  <div class="picker-hint">{{ picker.get("hint", "Оберіть марку, потім модель і натисніть «Шукати».") }}</div>
+{% endif %}
+
+{% if not cars and (selected_brand or selected_model) %}
+<section class="picker-empty">
+  <div class="picker-empty-icon">🚘</div>
+  <h2>{{ picker.get("not_found_title", "На жаль, такої машини ми не знайшли") }}</h2>
+  <p>{{ picker.get("not_found_text", "Зателефонуйте нам, і ми допоможемо вам підібрати авто.") }}</p>
+  <a class="btn red js-call-modal" href="#">{{ picker.get("call_button", "☎ Зателефонувати нам") }}</a>
+</section>
+{% endif %}
+
+<div class="cards">
+{% for car in cars %}
+  <article class="car-card">
+    {% if car.photo %}
+      <a href="{{ url_for('car_detail', car_id=car.id) }}"><img src="{{ url_for('static', filename='uploads/' + car.photo) }}" alt="{{ car.brand }} {{ car.model }}"></a>
+    {% else %}
+      <a href="{{ url_for('car_detail', car_id=car.id) }}"><div class="no-photo">🚘</div></a>
+    {% endif %}
+    <div class="car-body">
+      <span class="tag">{{ car.brand }}</span>
+      <h3>{{ car.model }}</h3>
+      <div class="specs">{{ car.year or '—' }} · {{ car.mileage or '—' }} км · {{ car.power or '—' }} к.с.</div>
+      <strong>{{ "{:,.0f}".format(car.price).replace(",", " ") if car.price else text.get("price_request", "Ціна за запитом") }}{% if car.price %} {{ site.currency_name }}{% endif %}</strong>
+      <a class="btn detail-btn" href="{{ url_for('car_detail', car_id=car.id) }}">{{ text.get("details", "Детальніше ›") }}</a>
+    </div>
+  </article>
+{% endfor %}
+</div>
+
+<script>
+(function(){
+  const models = {{ models|tojson }};
+  const brand = document.getElementById('brandSelect');
+  const model = document.getElementById('modelSelect');
+  const selectedModel = {{ selected_model|tojson }};
+
+  function fillModels(){
+    const list = models[brand.value] || [];
+    model.innerHTML = '<option value="">{{ picker.get("model_placeholder", "Оберіть модель") }}</option>';
+    list.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      if (name.toLowerCase() === String(selectedModel || '').toLowerCase()) option.selected = true;
+      model.appendChild(option);
+    });
+    model.disabled = !brand.value || !list.length;
+  }
+
+  brand.addEventListener('change', function(){
+    model.value = '';
+    fillModels();
+  });
+
+  fillModels();
+})();
+</script>
+{% endblock %}

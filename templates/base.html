@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site.name }} — {{ site.title }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" type="image/png" sizes="128x128" href="{{ url_for('static', filename='vagzlumauto-icon.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='vagzlumauto-icon.png') }}">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="{{ url_for('home') }}"><b>🚘</b><span>{{ site.brand_name }}<small>{{ site.title }}</small></span></a>
+  <button class="mobile-menu-btn" type="button" aria-label="Відкрити меню" aria-expanded="false">☰</button>
+  <nav id="mainNav">
+    {% for item in config_nav %}
+      {% set allowed = (not item.get("roles")) or (current_user and current_user.role in item.get("roles")) %}
+      {% if allowed %}
+        <a class="{{ 'active' if request.endpoint == item.endpoint else '' }}" href="{{ url_for(item.endpoint) }}">{{ item.name }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+  <div class="nav-actions">
+    <a class="call js-call-modal" href="#">☎ Зателефонувати</a>
+    {% if current_user %}
+      <a class="login" href="{{ url_for('logout') }}">Вийти</a>
+    {% else %}
+      <a class="login" href="{{ url_for('login') }}">Увійти</a>
+    {% endif %}
+  </div>
+</header>
+<main>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}<div class="flash-wrap">{% for cat,msg in messages %}<div class="flash {{cat}}">{{msg}}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+{% block content %}{% endblock %}
+</main>
+<footer>
+  <b>{{ site.name }}</b><br>{{ site.footer|safe }}
+</footer>
+
+<!-- Єдине вікно зв’язку для всіх кнопок «Зателефонувати» -->
+<div id="callModal" class="call-modal" aria-hidden="true">
+  <div class="call-modal-backdrop" data-close-call></div>
+  <div class="call-modal-card" role="dialog" aria-modal="true" aria-labelledby="callModalTitle">
+    <button class="call-modal-close" type="button" aria-label="Закрити" data-close-call>×</button>
+    <div class="call-modal-icon">☎</div>
+    <h2 id="callModalTitle">Зателефонуйте нам</h2>
+    <p>Оберіть зручний номер для зв’язку</p>
+    <div class="call-numbers">
+      {% for phone in config_phones %}
+      <div class="call-number">
+        <div class="call-number-main">{{ phone.display }}</div>
+        <div class="call-number-actions">
+          <a href="viber://chat?number=%2B{{ phone.digits }}" class="social-btn">{{ text.get("viber", "◯ Вайбер") }}</a>
+          <a href="tg://resolve?phone={{ phone.digits }}" class="social-btn">{{ text.get("telegram", "➤ Телеграм") }}</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const modal=document.getElementById('callModal');
+  if(!modal) return;
+  const open=()=>{modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');};
+  const close=()=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open');};
+  document.querySelectorAll('.js-call-modal').forEach(btn=>btn.addEventListener('click',e=>{e.preventDefault();open();}));
+  modal.querySelectorAll('[data-close-call]').forEach(el=>el.addEventListener('click',close));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape' && modal.classList.contains('open')) close();});
+})();
+</script>
+<script>
+(function(){
+  const btn=document.querySelector('.mobile-menu-btn');
+  const nav=document.getElementById('mainNav');
+  if(!btn || !nav) return;
+  btn.addEventListener('click',()=>{
+    const open=nav.classList.toggle('mobile-open');
+    btn.setAttribute('aria-expanded',open?'true':'false');
+    btn.textContent=open?'×':'☰';
+  });
+  nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
+    nav.classList.remove('mobile-open');
+    btn.setAttribute('aria-expanded','false');
+    btn.textContent='☰';
+  }));
+})();
+</script>
+</body>
+</html>

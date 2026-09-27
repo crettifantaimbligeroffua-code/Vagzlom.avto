@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{car.brand}} {{car.model}} — VagZlumAuto{% endblock %}
+{% block content %}
+<div class="car-detail-page">
+  <a class="back-link" href="{{ url_for('cars') }}">← Назад до списку</a>
+  <section class="detail">
+    <div class="gallery">
+      {% if photos %}
+      <div class="gallery-main">
+        <img id="mainCarPhoto" class="main-photo" src="{{ url_for('static', filename='uploads/' + photos[0].filename) }}" alt="{{car.brand}} {{car.model}}">
+        {% if photos|length > 1 %}
+        <button type="button" class="gallery-arrow gallery-prev" aria-label="Попереднє фото">‹</button>
+        <button type="button" class="gallery-arrow gallery-next" aria-label="Наступне фото">›</button>
+        <div id="photoCounter" class="photo-count">1 / {{ photos|length }}</div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="gallery-main"><div class="main-photo no-photo">🚘</div></div>
+      {% endif %}
+
+      {% if photos|length > 1 %}
+      <div class="thumb-row">
+        <button type="button" class="thumb-arrow" id="thumbPrev" aria-label="Прокрутити фото вліво">‹</button>
+        <div class="thumbs" id="carThumbs">
+          {% for p in photos %}
+          <button type="button" class="thumb {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" aria-label="Фото {{ loop.index }}">
+            <img src="{{ url_for('static', filename='uploads/' + p.filename) }}" alt="Фото {{ loop.index }}">
+          </button>
+          {% endfor %}
+        </div>
+        <button type="button" class="thumb-arrow" id="thumbNext" aria-label="Прокрутити фото вправо">›</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="detail-info">
+      <div class="detail-topline"><span class="tag">Рекомендуємо</span><span class="location">◉ Львів</span></div>
+      <h1>{{car.price and ('{:,.0f}'.format(car.price).replace(',', ' ') + ' доларів США') or 'Ціна за запитом'}}</h1>
+      <div class="car-title-sub">{{ car.brand }} {{ car.model }}</div>
+      <div class="quick-spec-card">
+        <h3>⚙ Характеристики</h3>
+        <div class="quick-specs">
+          {% for label, value in [('Рік випуску',car.year),('Пробіг',(car.mileage|string + ' тис. км') if car.mileage else None),('Паливо',car.fuel),('Коробка передач',car.gearbox),('Кузов',car.body),('Колір',car.color),('Двигун',car.engine),('Привід',car.drive),('Покоління',car.generation),('Екологічний стандарт',car.eco_standard),('Стан',car.condition),('Витрати пального (л/100км)',car.fuel_consumption)] if value %}
+          <div><span>{{label}}</span><b>{{value}}</b></div>
+          {% endfor %}
+        </div>
+      </div>
+      <a class="btn green wide js-call-modal" href="#">☎ Зателефонувати нам</a>
+    </div>
+  </section>
+
+  {% set detail_groups = [
+  ('Безпека', car.safety), ('Кондиціонер', car.air_conditioner), ('Комфорт', car.comfort), ('Оптика', car.optics),
+  ('Мультимедіа', car.multimedia), ('Салон та кузов', car.interior_body), ('Фари', car.headlights),
+  ('Система допомоги при паркуванні', car.parking), ('Подушки безпеки', car.airbags)
+  ] %}
+  <div class="feature-list">
+    {% for label, value in detail_groups if value %}
+    <section class="feature-box"><h3>{{label}}</h3><p>{{value}}</p></section>
+    {% endfor %}
+  </div>
+
+  <section class="text-panel"><h2>Опис</h2><p>{{car.description or 'Опис автомобіля не додано.'}}</p></section>
+  <section class="interest-box"><h3>Зацікавило це авто?</h3><p>Зателефонуйте нам, щоб дізнатися більше та домовитися про огляд у Львові.</p><a class="btn red js-call-modal" href="#">☎ Зателефонувати нам</a></section>
+
+  {% if current_user and current_user.role in ['editor','admin'] %}
+  <form method="post" action="{{url_for('delete_car', car_id=car.id)}}" onsubmit="return confirm('Видалити оголошення?')"><button class="btn danger">Видалити оголошення</button></form>
+  {% endif %}
+</div>
+
+{% if photos|length > 1 %}
+<script>
+(function(){
+  const photos = [{% for p in photos %}"{{ url_for('static', filename='uploads/' + p.filename) }}"{% if not loop.last %},{% endif %}{% endfor %}];
+  const main = document.getElementById('mainCarPhoto');
+  const counter = document.getElementById('photoCounter');
+  const thumbs = Array.from(document.querySelectorAll('.thumb'));
+  const strip = document.getElementById('carThumbs');
+  let index = 0;
+  function show(i){
+    index = (i + photos.length) % photos.length;
+    main.src = photos[index];
+    counter.textContent = (index + 1) + ' / ' + photos.length;
+    thumbs.forEach((t,n)=>t.classList.toggle('active',n===index));
+    thumbs[index]?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }
+  document.querySelector('.gallery-prev').addEventListener('click',()=>show(index-1));
+  document.querySelector('.gallery-next').addEventListener('click',()=>show(index+1));
+  thumbs.forEach(t=>t.addEventListener('click',()=>show(Number(t.dataset.index))));
+  document.getElementById('thumbPrev')?.addEventListener('click',()=>strip.scrollBy({left:-280,behavior:'smooth'}));
+  document.getElementById('thumbNext')?.addEventListener('click',()=>strip.scrollBy({left:280,behavior:'smooth'}));
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')show(index-1); if(e.key==='ArrowRight')show(index+1);});
+})();
+</script>
+{% endif %}
+{% endblock %}
