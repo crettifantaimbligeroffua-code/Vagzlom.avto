@@ -183,13 +183,20 @@ def init_db():
     for field in DETAIL_FIELDS:
         if field not in existing_cols:
             conn.execute(f"ALTER TABLE cars ADD COLUMN {field} TEXT")
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@vagzlumauto.local")
-    admin_password = os.environ.get("ADMIN_PASSWORD", "Admin123!")
+    admin_email = os.environ.get("ADMIN_EMAIL", getattr(config, "ADMIN_DEFAULT_EMAIL", "admin@vagzlumauto.local"))
+    admin_password = os.environ.get("ADMIN_PASSWORD", getattr(config, "ADMIN_DEFAULT_PASSWORD", "Admin123!"))
     existing = conn.execute("SELECT id FROM users WHERE email=?", (admin_email,)).fetchone()
     if not existing:
         conn.execute(
             "INSERT INTO users(email,password_hash,role) VALUES(?,?,?)",
             (admin_email, generate_password_hash(admin_password), "admin")
+        )
+    else:
+        # У виданій версії архіву цей обліковий запис гарантовано має вказані нижче
+        # стартові дані для входу в адмінпанель. Змінити їх можна через змінні середовища.
+        conn.execute(
+            "UPDATE users SET password_hash=?, role='admin' WHERE id=?",
+            (generate_password_hash(admin_password), existing[0])
         )
     conn.commit()
     conn.close()

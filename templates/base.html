@@ -23,6 +23,7 @@
   <div class="nav-actions">
     <a class="call js-call-modal" href="#">☎ Зателефонувати</a>
     {% if current_user %}
+      {% if current_user.role == 'admin' %}<a class="login admin-login" href="{{ url_for('admin') }}">Адмінка</a>{% endif %}
       <a class="login" href="{{ url_for('logout') }}">Вийти</a>
     {% else %}
       <a class="login" href="{{ url_for('login') }}">Увійти</a>

@@ -49,6 +49,7 @@ NAV = [
     {"key": "additional", "name": "Додатково", "endpoint": "additional"},
     {"key": "add_car", "name": "Додати", "endpoint": "add_car", "roles": ["editor", "admin"]},
     {"key": "admin_users", "name": "Користувачі", "endpoint": "admin_users", "roles": ["admin"]},
+    {"key": "admin", "name": "Адмінка", "endpoint": "admin", "roles": ["admin"]},
 ]
 
 # ------------------------------------------------------------
