@@ -465,7 +465,7 @@ def admin_telegram():
     
     default_tmpl = """🔥 {brand} {model} {engine_info} {year}
 🪪 {vin}
-🌐 Посилання на сайт з детальними характеристиками: {url}
+🌐 Посилання на сайт з детальними характеристиками: https://vagzlomavto.onrender.com/
 
 🚙 Пробіг: {mileage} тис. км
 🔥 Паливо: {fuel}

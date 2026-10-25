@@ -11,7 +11,7 @@ UPLOAD_DIR = BASE / "static" / "uploads"
 
 DEFAULT_TEMPLATE = """🔥 {brand} {model} {engine_info} {year}
 🪪 {vin}
-🌐 Посилання на сайт з детальними характеристиками: {url}
+🌐 Посилання на сайт з детальними характеристиками: https://vagzlomavto.onrender.com/
 
 🚙 Пробіг: {mileage} тис. км
 🔥 Паливо: {fuel}
@@ -100,7 +100,7 @@ def _async_send_to_telegram(car_id, delay=60):
             model=model,
             year=year,
             vin=vin,
-            url=listing_url,
+            url=site_url + "/",
             mileage=mileage,
             fuel=fuel,
             drive=drive,
@@ -114,7 +114,7 @@ def _async_send_to_telegram(car_id, delay=60):
         caption = (
             f"🔥 {brand} {model} {engine_info} {year}\n"
             f"🪪 {vin}\n"
-            f"🌐 Посилання на сайт з детальними характеристиками: {listing_url}\n\n"
+            f"🌐 Посилання на сайт з детальними характеристиками: https://vagzlomavto.onrender.com/\n\n"
             f"🚙 Пробіг: {mileage} тис. км\n"
             f"🔥 Паливо: {fuel}\n"
             f"🚙 Привід: {drive}\n"
