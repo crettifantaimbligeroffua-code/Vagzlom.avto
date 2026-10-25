@@ -489,9 +489,9 @@ def admin_telegram():
 
 @app.route("/terms/tiktok0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc.txt")
 def tiktok_site_verification():
-    # TikTok developer domain verification file
+    # TikTok developer URL-prefix verification file
     return app.response_class(
-        "tiktok-developers-site-verification=0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc\\n",
+        "tiktok-developers-site-verification=0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc\n",
         mimetype="text/plain"
     )
 
