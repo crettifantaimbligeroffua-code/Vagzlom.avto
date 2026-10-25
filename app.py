@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
+import io
 from pathlib import Path
 import uuid
 import os
@@ -17,6 +18,9 @@ BASE = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE))).expanduser().resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "vagzlumauto.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql://" + DATABASE_URL[len("postgres://"):]
 UPLOAD_DIR = DATA_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -46,52 +50,83 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("RENDER", "").lower() == "t
 app.config["MAX_CONTENT_LENGTH"] = 512 * 1024 * 1024
 from config import *
 
+class PGCursor:
+    def __init__(self, cursor, lastrowid=None):
+        self._cursor = cursor
+        self.lastrowid = lastrowid
+    def fetchone(self): return self._cursor.fetchone()
+    def fetchall(self): return self._cursor.fetchall()
+    def __iter__(self): return iter(self._cursor)
+    def __getattr__(self, name): return getattr(self._cursor, name)
+
+class PGConnection:
+    def __init__(self, raw): self.raw = raw
+    def execute(self, sql, params=()):
+        sql = sql.strip()
+        if sql.upper().startswith("PRAGMA TABLE_INFO(CARS)"):
+            cur = self.raw.cursor()
+            cur.execute("SELECT ordinal_position-1 AS cid, column_name AS name, data_type AS type, 0 AS notnull, NULL AS dflt_value, 0 AS pk FROM information_schema.columns WHERE table_schema='public' AND table_name='cars' ORDER BY ordinal_position")
+            return PGCursor(cur)
+        normalized = sql.replace("?", "%s")
+        upper = normalized.upper()
+        wants_id = upper.startswith("INSERT INTO USERS") or upper.startswith("INSERT INTO CARS")
+        if wants_id and "RETURNING" not in upper:
+            normalized += " RETURNING id"
+        cur = self.raw.cursor()
+        cur.execute(normalized, params)
+        lastrowid = None
+        if wants_id:
+            row = cur.fetchone()
+            if row is not None: lastrowid = row[0]
+            # Return a compatible cursor whose fetchone is empty after consuming RETURNING.
+            class EmptyCursor:
+                def fetchone(self): return None
+                def fetchall(self): return []
+                def __iter__(self): return iter(())
+            return PGCursor(EmptyCursor(), lastrowid)
+        return PGCursor(cur)
+    def executescript(self, script):
+        cur = self.raw.cursor()
+        for statement in script.split(';'):
+            statement = statement.strip()
+            if not statement: continue
+            statement = statement.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+            statement = statement.replace('INTEGER PRIMARY KEY', 'SERIAL PRIMARY KEY')
+            statement = statement.replace('REAL', 'DOUBLE PRECISION')
+            cur.execute(statement)
+        return PGCursor(cur)
+    def commit(self): self.raw.commit()
+    def rollback(self): self.raw.rollback()
+    def close(self): self.raw.close()
+
 def db():
+    if DATABASE_URL:
+        import psycopg2
+        from psycopg2.extras import DictCursor
+        raw = psycopg2.connect(DATABASE_URL, cursor_factory=DictCursor, sslmode="require")
+        return PGConnection(raw)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
     conn = db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT
-    );
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'user',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS cars (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        brand TEXT NOT NULL,
-        model TEXT NOT NULL,
-        year INTEGER,
-        price REAL,
-        mileage INTEGER,
-        power INTEGER,
-        fuel TEXT,
-        gearbox TEXT,
-        body TEXT,
-        color TEXT,
-        engine TEXT,
-        drive TEXT,
-        phone TEXT,
-        description TEXT,
-        vin TEXT,
-        owner_id INTEGER,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS car_photos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        car_id INTEGER NOT NULL,
-        filename TEXT NOT NULL
-    );
-    """)
-    # Додаємо детальні характеристики до вже існуючих баз без втрати даних.
+    if DATABASE_URL:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+            CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user', created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS cars (id INTEGER PRIMARY KEY AUTOINCREMENT, brand TEXT NOT NULL, model TEXT NOT NULL, year INTEGER, price REAL, mileage INTEGER, power INTEGER, fuel TEXT, gearbox TEXT, body TEXT, color TEXT, engine TEXT, drive TEXT, phone TEXT, description TEXT, vin TEXT, owner_id INTEGER, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS car_photos (id INTEGER PRIMARY KEY AUTOINCREMENT, car_id INTEGER NOT NULL, filename TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS uploaded_files (filename TEXT PRIMARY KEY, data BYTEA NOT NULL, mime TEXT NOT NULL);
+        """)
+    else:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+            CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'user', created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS cars (id INTEGER PRIMARY KEY AUTOINCREMENT, brand TEXT NOT NULL, model TEXT NOT NULL, year INTEGER, price REAL, mileage INTEGER, power INTEGER, fuel TEXT, gearbox TEXT, body TEXT, color TEXT, engine TEXT, drive TEXT, phone TEXT, description TEXT, vin TEXT, owner_id INTEGER, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+            CREATE TABLE IF NOT EXISTS car_photos (id INTEGER PRIMARY KEY AUTOINCREMENT, car_id INTEGER NOT NULL, filename TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS uploaded_files (filename TEXT PRIMARY KEY, data BLOB NOT NULL, mime TEXT NOT NULL);
+        """)
     existing_cols = {r[1] for r in conn.execute("PRAGMA table_info(cars)").fetchall()}
     for field in DETAIL_FIELDS:
         key = field["key"]
@@ -101,10 +136,7 @@ def init_db():
     admin_password = os.environ.get("ADMIN_PASSWORD", ADMIN_DEFAULT_PASSWORD)
     existing = conn.execute("SELECT id FROM users WHERE email=?", (admin_email,)).fetchone()
     if not existing:
-        conn.execute(
-            "INSERT INTO users(email,password_hash,role) VALUES(?,?,?)",
-            (admin_email, generate_password_hash(admin_password), "admin")
-        )
+        conn.execute("INSERT INTO users(email,password_hash,role) VALUES(?,?,?)", (admin_email, generate_password_hash(admin_password), "admin"))
     conn.commit()
     conn.close()
 
@@ -127,7 +159,19 @@ def save_upload(file):
         raise ValueError("Дозволені JPG, JPEG, PNG та WEBP.")
     ext = file.filename.rsplit(".", 1)[1].lower()
     filename = f"{uuid.uuid4().hex}.{ext}"
-    file.save(UPLOAD_DIR / filename)
+    raw = file.read()
+    mime = file.mimetype or ("image/png" if ext == "png" else "image/webp" if ext == "webp" else "image/jpeg")
+    conn = db()
+    try:
+        if DATABASE_URL:
+            conn.execute("INSERT INTO uploaded_files(filename,data,mime) VALUES(?,?,?)", (filename, raw, mime))
+        else:
+            conn.execute("INSERT OR REPLACE INTO uploaded_files(filename,data,mime) VALUES(?,?,?)", (filename, raw, mime))
+        conn.commit()
+    finally:
+        conn.close()
+    # Keep local fallback copy for older data and development.
+    (UPLOAD_DIR / filename).write_bytes(raw)
     return filename
 
 def require_role(*roles):
@@ -142,7 +186,18 @@ def inject_globals():
 
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
-    # Serve uploaded photos from persistent storage, not the disposable app directory.
+    # New photos are stored in the persistent database so Render restarts do not remove them.
+    conn = db()
+    try:
+        row = conn.execute("SELECT data,mime FROM uploaded_files WHERE filename=?", (filename,)).fetchone()
+        if row:
+            data = row["data"]
+            if isinstance(data, memoryview): data = data.tobytes()
+            return send_file(io.BytesIO(data), mimetype=row["mime"], download_name=filename, max_age=86400)
+    except Exception:
+        app.logger.exception("Could not load photo blob from database")
+    finally:
+        conn.close()
     return send_from_directory(UPLOAD_DIR, filename)
 
 @app.route("/")
@@ -228,7 +283,7 @@ def register():
             session["user_id"] = cur.lastrowid
             flash("Реєстрація успішна. Зараз у вас звичайні права користувача.", "success")
             return redirect(url_for("home"))
-        except sqlite3.IntegrityError:
+        except (sqlite3.IntegrityError,):
             flash("Такий email уже зареєстрований.", "error")
         finally:
             conn.close()
