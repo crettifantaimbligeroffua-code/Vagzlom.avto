@@ -177,13 +177,35 @@ def _async_send_to_telegram(car_id, delay=60):
             except Exception:
                 result = {"ok": False, "description": resp.text[:500]}
             if not resp.ok or not result.get("ok"):
-                print(f"Помилка Telegram API (фото {batch_start + 1}-{batch_start + len(batch)}): {result}")
-                # Не продовжуємо, щоб не створювати частково дубльовані публікації після помилки.
-                break
+                print(f"Помилка Telegram API (фото {batch_start + 1}-{batch_start + len(batch)}): {result}. Пробуємо відправити фото окремо.")
+                # Якщо альбом не прийнято (наприклад, через один проблемний файл),
+                # пробуємо кожне фото окремо, щоб не втрачати решту фотографій.
+                for offset, path in enumerate(batch):
+                    photo_index = batch_start + offset + 1
+                    try:
+                        with open(path, "rb") as photo_file:
+                            data = {"chat_id": CHANNEL_ID}
+                            if photo_index == 1:
+                                data["caption"] = caption[:1024]
+                            single_resp = requests.post(
+                                f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                                data=data, files={"photo": photo_file}, timeout=120
+                            )
+                        try:
+                            single_result = single_resp.json()
+                        except Exception:
+                            single_result = {"ok": False, "description": single_resp.text[:500]}
+                        if not single_resp.ok or not single_result.get("ok"):
+                            print(f"Telegram: не вдалося відправити фото {photo_index}/{len(valid_paths)}: {single_result}")
+                        else:
+                            print(f"Telegram: відправлено фото {photo_index}/{len(valid_paths)} окремо для авто {car_id}.")
+                    except Exception as single_error:
+                        print(f"Telegram: помилка фото {photo_index}/{len(valid_paths)}: {single_error}")
+                continue
             print(f"Telegram: надіслано фото {batch_start + 1}-{batch_start + len(batch)} з {len(valid_paths)} для авто {car_id}.")
         except Exception as e:
-            print(f"Помилка публікації фото в Telegram: {e}")
-            break
+            print(f"Помилка публікації фото в Telegram (група {batch_start + 1}-{batch_start + len(batch)}): {e}. Продовжуємо з наступною групою.")
+            continue
         finally:
             for f in files.values():
                 try:
