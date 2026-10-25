@@ -510,3 +510,8 @@ if __name__ == "__main__":
         use_reloader=False,
         threaded=True
     )
+
+
+@app.route("/privacy/<path:filename>")
+def tiktok_privacy_verification_file(filename):
+    return send_from_directory(BASE / "static" / "privacy", filename, mimetype="text/plain")
