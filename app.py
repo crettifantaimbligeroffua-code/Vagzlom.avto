@@ -487,6 +487,14 @@ def admin_telegram():
     return render_template("admin_telegram.html", template_text=current_tmpl)
 
 
+@app.route("/terms/tiktok0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc.txt")
+def tiktok_site_verification():
+    # TikTok developer domain verification file
+    return app.response_class(
+        "tiktok-developers-site-verification=0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc\\n",
+        mimetype="text/plain"
+    )
+
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
