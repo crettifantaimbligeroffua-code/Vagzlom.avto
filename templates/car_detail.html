@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ car.brand }} {{ car.model }} — {{ site.name }}{% endblock %}
+{% block content %}
+<section class="detail-page" style="padding-top: 10px;">
+  <a class="back-link" href="{{ url_for('cars') }}">← {{ ui.detail_back }}</a>
+  
+  <div class="detail-top" style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr); gap: 25px; margin-bottom: 30px;">
+    <!-- Gallery -->
+    <div class="gallery" style="background:#0c1629; padding:15px; border-radius:14px; border:1px solid #24334d;">
+      {% if photos %}
+        <div class="main-photo-wrap" style="position:relative; width:100%; height:420px; overflow:hidden; border-radius:10px; background:#050b18;">
+          <img id="mainCarPhoto" src="{{ url_for('static', filename='uploads/' + photos[0].filename) }}" alt="{{ car.brand }} {{ car.model }}" style="width:100%; height:100%; object-fit:contain; object-position:center; display:block;">
+          {% if photos|length > 1 %}
+            <button class="gallery-prev" type="button" onclick="prevPhoto()" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(12,22,41,0.85); color:#fff; border:1px solid #3d5275; font-size:24px; cursor:pointer;">‹</button>
+            <button class="gallery-next" type="button" onclick="nextPhoto()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(12,22,41,0.85); color:#fff; border:1px solid #3d5275; font-size:24px; cursor:pointer;">›</button>
+            <span class="gallery-count" id="galleryCount" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); background:rgba(8,16,30,0.9); color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;">1 / {{ photos|length }}</span>
+          {% endif %}
+        </div>
+        {% if photos|length > 1 %}
+          <div class="thumbs" id="photoThumbs" style="display:flex; gap:10px; margin-top:12px; overflow-x:auto; padding-bottom:5px;">
+            {% for p in photos %}
+              <button type="button" class="thumb {{ 'active' if loop.first else '' }}" onclick="setPhoto({{ loop.index0 }})" style="flex:0 0 75px; height:55px; border-radius:6px; overflow:hidden; border:2px solid #24334d; padding:0; cursor:pointer; background:#000;">
+                <img src="{{ url_for('static', filename='uploads/' + p.filename) }}" alt="Фото {{ loop.index }}" style="width:100%; height:100%; object-fit:cover;">
+              </button>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="main-photo-wrap" style="height:350px; display:grid; place-items:center; background:#08101e; border-radius:10px; font-size:48px;">🚘</div>
+      {% endif %}
+    </div>
+
+    <!-- Side Specs Panel -->
+    <div class="detail-side" style="display:flex; flex-direction:column; gap:15px;">
+      <div>
+        <div class="eyebrow" style="display:inline-block; padding:4px 10px; background:#1c2b45; color:#52a5ff; border-radius:6px; font-size:12px; font-weight:bold; margin-bottom:8px;">Рекомендуємо · {{ site.city }}</div>
+        <h1 style="font-size:32px; color:#31d77c; margin:0 0 10px;">
+          {% if car.price %}{{ "{:,.0f}".format(car.price).replace(",", " ") }} {{ site.currency_name }}{% else %}{{ ui.price_request }}{% endif %}
+        </h1>
+      </div>
+
+      <div class="spec-panel" style="background:#0c1629; padding:18px; border-radius:14px; border:1px solid #24334d;">
+        <h3 style="margin-top:0; margin-bottom:14px; font-size:16px; color:#fff; display:flex; align-items:center; gap:8px;">⚙️ {{ ui.detail_characteristics }}</h3>
+        <div class="spec-grid" style="display:grid; grid-template-columns:1fr; gap:8px;">
+          {% set basic=[('Рік випуску',car.year),('Пробіг',((car.mileage|string)+' '+ui.thousand_km) if car.mileage else None),('Паливо',car.fuel),('Коробка передач',car.gearbox),('Кузов',car.body),('Колір',car.color),('Двигун',car.engine),('Привід',car.drive),('Покоління',car.generation),('Екологічний стандарт',car.eco_standard),('Стан',car.condition),('Витрати пального (л/100км)',car.fuel_consumption)] %}
+          {% for label,value in basic if value %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#060d1a; border-radius:6px; border:1px solid #1a2942;">
+              <span style="color:#8f9db4; font-size:13px;">{{ label }}:</span>
+              <strong style="color:#ffffff; font-size:14px;">{{ value }}</strong>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <a class="btn green wide js-call-modal" href="#" style="padding:14px; text-align:center; font-weight:bold; font-size:16px; border-radius:10px;">📞 {{ ui.call_us }}</a>
+
+      {% if current_user and current_user.role in ['editor','admin'] %}
+        <a class="btn outline wide" href="{{ url_for('edit_car', car_id=car.id) }}" style="padding:10px; text-align:center; margin-top:5px;">✏️ Редагувати лот</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Bottom Details & Description -->
+  <div class="detail-sections" style="display:grid; gap:20px;">
+    {% for label,key in detail_groups %}
+      {% set value=car[key] %}
+      {% if value %}
+        <section class="detail-box" style="background:#0c1629; padding:20px; border-radius:12px; border:1px solid #24334d;">
+          <h3 style="margin-top:0; color:#fff; font-size:18px;">{{ label }}</h3>
+          <div class="detail-tags" style="color:#c4ccda; font-size:14px; line-height:1.6;">{{ value }}</div>
+        </section>
+      {% endif %}
+    {% endfor %}
+
+    <section class="detail-box" style="background:#0c1629; padding:20px; border-radius:12px; border:1px solid #24334d;">
+      <h3 style="margin-top:0; color:#fff; font-size:18px; margin-bottom:12px;">📑 {{ ui.detail_description }}</h3>
+      <p style="color:#c4ccda; font-size:15px; line-height:1.7; margin:0;">{{ car.description or ui.no_description }}</p>
+    </section>
+
+    <section class="detail-contact" style="background:linear-gradient(135deg, #111f38, #0a1324); padding:25px; border-radius:12px; border:1px solid #2d4368; text-align:center;">
+      <h3 style="margin-top:0; color:#fff; font-size:20px;">{{ ui.interested }}</h3>
+      <p style="color:#9eb0c8; font-size:14px; margin-bottom:18px;">{{ ui.interested_text }}</p>
+      <a class="btn red js-call-modal" href="#" style="padding:12px 28px; font-size:15px;">📞 {{ ui.call_us }}</a>
+    </section>
+  </div>
+</section>
+
+{% if photos|length > 1 %}
+<script>
+  const carPhotos={{ photos|map(attribute='filename')|list|tojson }};
+  let photoIndex=0;
+  function setPhoto(i){
+    photoIndex=i;
+    document.getElementById('mainCarPhoto').src={{ url_for('static',filename='uploads/')|tojson }}+carPhotos[i];
+    document.getElementById('galleryCount').textContent=(i+1)+' / '+carPhotos.length;
+    document.querySelectorAll('.thumb').forEach((x,n)=>x.style.borderColor=(n===i?'#31d77c':'#24334d'));
+  }
+  function nextPhoto(){setPhoto((photoIndex+1)%carPhotos.length)}
+  function prevPhoto(){setPhoto((photoIndex-1+carPhotos.length)%carPhotos.length)}
+</script>
+{% endif %}
+{% endblock %}
