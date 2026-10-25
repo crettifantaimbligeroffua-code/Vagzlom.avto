@@ -9,7 +9,7 @@
 <body>
 <canvas id="partsParticles" class="parts-particles" aria-hidden="true"></canvas>
 <header class="nav">
-  <a class="brand" href="{{ url_for('home') }}"><b>🚘</b><span>{{ site.name }}<small>Авто, запчастини, ремонт</small></span></a>
+  <a class="brand" href="{{ url_for('home') }}"><b>🚘</b><span>{{ site.name }}<small>АвтоПригон Сокаль</small></span></a>
   <nav>
     {% for item in nav %}
       {% if not item.roles or (current_user and current_user.role in item.roles) %}

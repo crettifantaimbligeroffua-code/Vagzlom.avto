@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -495,11 +495,6 @@ def terms():
 def privacy():
     return render_template("privacy.html")
 
-
-@app.route("/terms/<path:filename>")
-def tiktok_verification_file(filename):
-    return send_from_directory(BASE / "static" / "terms", filename, mimetype="text/plain")
-
 init_db()
 
 if __name__ == "__main__":
@@ -510,18 +505,3 @@ if __name__ == "__main__":
         use_reloader=False,
         threaded=True
     )
-
-
-@app.route("/privacy/<path:filename>")
-def tiktok_privacy_verification_file(filename):
-    return send_from_directory(BASE / "static" / "privacy", filename, mimetype="text/plain")
-
-
-@app.route("/tiktok7BKQXulga15PQpSeOTpnmAvCjxnADE48.txt")
-def tiktok_root_verification():
-    return send_from_directory(BASE / "static", "tiktok7BKQXulga15PQpSeOTpnmAvCjxnADE48.txt", mimetype="text/plain")
-
-
-@app.route("/tiktokmHQZovamLjLSVETbphwnm5UGR98xMRDF.txt")
-def tiktok_root_verification_mhq():
-    return send_from_directory(BASE / "static", "tiktokmHQZovamLjLSVETbphwnm5UGR98xMRDF.txt", mimetype="text/plain")
