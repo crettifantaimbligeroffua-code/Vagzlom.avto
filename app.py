@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -487,14 +487,6 @@ def admin_telegram():
     return render_template("admin_telegram.html", template_text=current_tmpl)
 
 
-@app.route("/terms/tiktok0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc.txt")
-def tiktok_site_verification():
-    # TikTok developer URL-prefix verification file
-    return app.response_class(
-        "tiktok-developers-site-verification=0m2oo6ZCcPf3ZV3fwJsIePRkaCTFfDGc\n",
-        mimetype="text/plain"
-    )
-
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
@@ -502,6 +494,11 @@ def terms():
 @app.route("/privacy")
 def privacy():
     return render_template("privacy.html")
+
+
+@app.route("/terms/<path:filename>")
+def tiktok_verification_file(filename):
+    return send_from_directory(BASE / "static" / "terms", filename, mimetype="text/plain")
 
 init_db()
 
