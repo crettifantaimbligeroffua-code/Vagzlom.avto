@@ -515,3 +515,8 @@ if __name__ == "__main__":
 @app.route("/privacy/<path:filename>")
 def tiktok_privacy_verification_file(filename):
     return send_from_directory(BASE / "static" / "privacy", filename, mimetype="text/plain")
+
+
+@app.route("/tiktok7BKQXulga15PQpSeOTpnmAvCjxnADE48.txt")
+def tiktok_root_verification():
+    return send_from_directory(BASE / "static", "tiktok7BKQXulga15PQpSeOTpnmAvCjxnADE48.txt", mimetype="text/plain")
