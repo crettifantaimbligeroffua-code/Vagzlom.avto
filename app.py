@@ -486,6 +486,15 @@ def admin_telegram():
     current_tmpl = row["value"] if row and row["value"] else default_tmpl
     return render_template("admin_telegram.html", template_text=current_tmpl)
 
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
 init_db()
 
 if __name__ == "__main__":

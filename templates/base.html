@@ -41,7 +41,7 @@
 {% endwith %}
 {% block content %}{% endblock %}
 </main>
-<footer><b>АвтоПригон</b><br>{{ site.footer|safe }}</footer>
+<footer><b>{{ site.name }}</b><br>{{ site.footer|safe }}<div class="legal-links" style="margin-top:12px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:13px"><a href="{{ url_for('terms') }}">Умови обслуговування</a><a href="{{ url_for('privacy') }}">Політика конфіденційності</a></div></footer>
 <div id="callModal" class="call-modal" aria-hidden="true">
   <div class="call-modal-backdrop" data-close-call></div>
   <div class="call-modal-card" role="dialog" aria-modal="true" aria-labelledby="callModalTitle">
