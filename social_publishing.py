@@ -128,9 +128,9 @@ def _async_send_to_telegram(car_id, delay=60):
             f"Привеземо за найкращою ціною в Україні 🤝"
         )
 
-    # Надсилаємо ВСІ фото: Telegram дозволяє до 10 фото в одній медіагрупі.
-    # Якщо фото більше 10 — ділимо на групи, не відкидаючи решту.
-    valid_paths = [path for path in photo_paths if path and path.exists()]
+    # Надсилаємо максимум 10 фото в Telegram, навіть якщо на сайті їх більше.
+    # Беремо перші 10 доступних фотографій.
+    valid_paths = [path for path in photo_paths if path and path.exists()][:10]
     if not valid_paths:
         text_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         try:
@@ -141,6 +141,7 @@ def _async_send_to_telegram(car_id, delay=60):
             print(f"Помилка публікації тексту в Telegram: {e}")
         return
 
+    # valid_paths вже обмежено 10 фото, тому буде лише одна група.
     for batch_start in range(0, len(valid_paths), 10):
         batch = valid_paths[batch_start:batch_start + 10]
         is_first_batch = batch_start == 0
