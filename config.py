@@ -85,6 +85,38 @@ CAR_MODELS = {
     "Jeep": ["Avenger", "Cherokee", "Compass", "Grand Cherokee", "Renegade", "Wrangler"],
     "Tesla": ["Model 3", "Model S", "Model X", "Model Y"],
 }
+# Додаткові сучасні марки та моделі, включно з комерційним транспортом і причепами.
+CAR_MODELS.update({
+    "Boro": ["K4 2022"],
+    "Porsche": ["718", "911", "Cayenne", "Macan", "Panamera", "Taycan"],
+    "Land Rover": ["Defender", "Discovery", "Discovery Sport", "Range Rover", "Range Rover Evoque", "Range Rover Sport", "Range Rover Velar"],
+    "Jaguar": ["E-Pace", "F-Pace", "F-Type", "I-Pace", "XE", "XF", "XJ"],
+    "Lexus": ["ES", "GS", "IS", "LBX", "LC", "LM", "LS", "NX", "RX", "RZ", "UX", "GX", "LX", "TX"],
+    "MINI": ["Cooper", "Cooper Electric", "Countryman", "Clubman", "Aceman", "Convertible"],
+    "Alfa Romeo": ["Giulia", "Stelvio", "Tonale", "Junior", "Giulietta"],
+    "BYD": ["Atto 3", "Dolphin", "Han", "Seal", "Seal U", "Sealion 7", "Tang", "Song Plus", "Yuan Plus", "Qin Plus"],
+    "MG": ["3", "4", "5", "Cyberster", "HS", "ZS", "Marvel R", "MG5 Electric"],
+    "Geely": ["Atlas", "Coolray", "Monjaro", "Geometry C", "Emgrand", "Tugella", "EX5"],
+    "Chery": ["Arrizo 5", "Arrizo 8", "Tiggo 4", "Tiggo 7", "Tiggo 8", "Tiggo 9", "Omoda 5"],
+    "Haval": ["H2", "H6", "H6 Hybrid", "H7", "H9", "Jolion", "Dargo", "F7"],
+    "Great Wall": ["Poer", "Wingle 5", "Wingle 7"],
+    "Zeekr": ["001", "007", "009", "X", "7X"],
+    "Polestar": ["1", "2", "3", "4"],
+    "XPeng": ["G3", "G6", "G9", "P5", "P7", "X9"],
+    "NIO": ["ET5", "ET7", "EL6", "EL7", "EL8", "ES6", "ES8", "EC6", "EC7"],
+    "Smart": ["#1", "#3", "ForTwo", "ForFour"],
+    "Genesis": ["G70", "G80", "G90", "GV60", "GV70", "GV80"],
+    "Infiniti": ["Q30", "Q50", "QX30", "QX50", "QX60", "QX80"],
+    "Lada": ["Granta", "Niva", "Vesta", "Largus", "XRAY"],
+    "SsangYong / KGM": ["Korando", "Rexton", "Tivoli", "Torres", "Musso", "Actyon"],
+    "Maxus": ["Deliver 3", "Deliver 9", "eDeliver 3", "eDeliver 9", "T90 EV", "Mifa 9"],
+    "Omoda": ["C5", "E5", "C7"],
+    "Jaecoo": ["J5", "J7", "J8"],
+    "Leapmotor": ["T03", "C10", "C16", "B10"],
+    "Li Auto": ["L6", "L7", "L8", "L9", "Mega"],
+    "Hongqi": ["E-HS9", "H5", "H6", "H9", "HS3", "HS5", "HS7"],
+})
+
 # Розширені покоління та популярні модифікації для точного пошуку.
 _MODEL_VARIANTS = {'Volkswagen': ['Golf I', 'Golf II', 'Golf III', 'Golf IV', 'Golf V', 'Golf VI', 'Golf VII', 'Golf VIII', 'Golf Mk1', 'Golf Mk2', 'Golf Mk3', 'Golf Mk4', 'Golf Mk5', 'Golf Mk6', 'Golf Mk7', 'Golf Mk8', 'Golf Variant', 'Golf Plus', 'Golf Sportsvan', 'Golf Alltrack', 'Golf e-Golf', 'Golf 1.4', 'Golf 1.4 TSI', 'Golf 1.6 FSI', 'Golf 1.6 MPI', 'Golf 1.9 SDI', 'Golf 2.0 SDI', 'Golf 2.0 GTI', 'Golf 2.0 TDI 4Motion', 'Jetta I', 'Jetta II', 'Jetta III', 'Jetta IV', 'Jetta V', 'Jetta VI', 'Jetta VII', 'Jetta A5', 'Jetta A6', 'Jetta A7', 'Passat B1', 'Passat B2', 'Passat B3', 'Passat B4', 'Passat B5', 'Passat B5.5', 'Passat B6', 'Passat B7', 'Passat B8', 'Passat B9', 'Passat Variant', 'Passat Alltrack', 'Passat CC', 'Touran I', 'Touran II', 'Touran 1T1', 'Touran 1T2', 'Touran 1T3', 'Touran 5T', 'Touran 1.4 TSI', 'Touran 1.9 TDI', 'Touran 2.0 SDI', 'Touran 2.0 TDI', 'Tiguan I', 'Tiguan II', 'Tiguan III', 'Tiguan Allspace', 'Polo III', 'Polo IV', 'Polo V', 'Polo VI', 'Caddy II', 'Caddy III', 'Caddy IV', 'Caddy V', 'Transporter T4', 'Transporter T5', 'Transporter T6', 'Transporter T6.1', 'Transporter T7', 'Multivan T5', 'Multivan T6', 'Multivan T7', 'Sharan I', 'Sharan II', 'Touareg I', 'Touareg II', 'Touareg III'], 'Audi': ['A3 8L', 'A3 8P', 'A3 8V', 'A3 8Y', 'A4 B5', 'A4 B6', 'A4 B7', 'A4 B8', 'A4 B9', 'A6 C4', 'A6 C5', 'A6 C6', 'A6 C7', 'A6 C8', 'Q3 8U', 'Q3 F3', 'Q5 8R', 'Q5 FY', 'Q7 4L', 'Q7 4M', 'Q8 e-tron', 'A5 B8', 'A5 B9', 'A8 D3', 'A8 D4', 'A8 D5'], 'Škoda': ['Octavia I', 'Octavia II', 'Octavia III', 'Octavia IV', 'Octavia Tour', 'Octavia A5', 'Octavia A7', 'Octavia A8', 'Superb I', 'Superb II', 'Superb III', 'Superb IV', 'Fabia I', 'Fabia II', 'Fabia III', 'Fabia IV', 'Rapid Spaceback', 'Kodiaq I', 'Kodiaq II', 'Karoq NU', 'Yeti 5L'], 'SEAT': ['Leon I', 'Leon II', 'Leon III', 'Leon IV', 'Ibiza II', 'Ibiza III', 'Ibiza IV', 'Ibiza V', 'Alhambra I', 'Alhambra II'], 'CUPRA': ['Formentor VZ', 'Leon Sportstourer', 'Born VZ'], 'Kia': ['Ceed I', 'Ceed II', 'Ceed III', 'Ceed SW', 'ProCeed', 'Sportage II', 'Sportage III', 'Sportage IV', 'Sportage V', 'Sorento II', 'Sorento III', 'Sorento IV', 'Rio II', 'Rio III', 'Rio IV', 'Optima JF', 'Niro HEV', 'Niro EV', 'XCeed'], 'Renault': ['Megane I', 'Megane II', 'Megane III', 'Megane IV', 'Megane E-Tech', 'Clio II', 'Clio III', 'Clio IV', 'Clio V', 'Scenic II', 'Scenic III', 'Scenic IV', 'Grand Scenic', 'Kangoo I', 'Kangoo II', 'Kangoo III', 'Trafic II', 'Trafic III', 'Master II', 'Master III', 'Laguna II', 'Laguna III'], 'Ford': ['Focus I', 'Focus II', 'Focus III', 'Focus IV', 'Focus Mk1', 'Focus Mk2', 'Focus Mk3', 'Focus Mk4', 'Fiesta V', 'Fiesta VI', 'Fiesta VII', 'Mondeo III', 'Mondeo IV', 'Mondeo V', 'Kuga I', 'Kuga II', 'Kuga III', 'C-Max I', 'C-Max II', 'S-Max I', 'S-Max II', 'Galaxy II', 'Galaxy III', 'Transit Mk6', 'Transit Mk7', 'Transit Custom', 'Tourneo Connect'], 'Dacia': ['Logan I', 'Logan II', 'Logan III', 'Sandero I', 'Sandero II', 'Sandero III', 'Duster I', 'Duster II', 'Duster III', 'Lodgy', 'Dokker Van', 'Jogger Hybrid'], 'Nissan': ['Qashqai J10', 'Qashqai J11', 'Qashqai J12', 'X-Trail T30', 'X-Trail T31', 'X-Trail T32', 'X-Trail T33', 'Juke F15', 'Juke F16', 'Leaf ZE0', 'Leaf ZE1'], 'Toyota': ['Corolla E120', 'Corolla E150', 'Corolla E180', 'Corolla E210', 'RAV4 XA30', 'RAV4 XA40', 'RAV4 XA50', 'Avensis T25', 'Avensis T27', 'Yaris XP10', 'Yaris XP90', 'Yaris XP130', 'Yaris XP210'], 'BMW': ['3 Series E36', '3 Series E46', '3 Series E90', '3 Series F30', '3 Series G20', '5 Series E39', '5 Series E60', '5 Series F10', '5 Series G30', 'X3 E83', 'X3 F25', 'X3 G01', 'X5 E53', 'X5 E70', 'X5 F15', 'X5 G05'], 'Mercedes-Benz': ['C-Class W203', 'C-Class W204', 'C-Class W205', 'C-Class W206', 'E-Class W211', 'E-Class W212', 'E-Class W213', 'E-Class W214', 'Sprinter W906', 'Sprinter W907', 'Vito W639', 'Vito W447'], 'Opel': ['Astra G', 'Astra H', 'Astra J', 'Astra K', 'Astra L', 'Corsa D', 'Corsa E', 'Corsa F', 'Zafira A', 'Zafira B', 'Zafira C', 'Insignia A', 'Insignia B'], 'Peugeot': ['308 I', '308 II', '308 III', '3008 I', '3008 II', '3008 III', '5008 I', '5008 II', 'Partner Tepee', 'Partner III'], 'Citroën': ['C4 I', 'C4 II', 'C4 III', 'C4 Picasso', 'Grand C4 Picasso', 'Berlingo II', 'Berlingo III'], 'Mazda': ['Mazda 3 BK', 'Mazda 3 BL', 'Mazda 3 BM', 'Mazda 3 BP', 'Mazda 6 GG', 'Mazda 6 GH', 'Mazda 6 GJ', 'Mazda 6 GL', 'CX-5 KE', 'CX-5 KF', 'CX-5 KF2'], 'Hyundai': ['i30 I', 'i30 II', 'i30 III', 'Tucson JM', 'Tucson LM', 'Tucson TL', 'Tucson NX4', 'Santa Fe CM', 'Santa Fe DM', 'Santa Fe TM', 'Santa Fe MX5'], 'Honda': ['Civic VII', 'Civic VIII', 'Civic IX', 'Civic X', 'Civic XI', 'CR-V II', 'CR-V III', 'CR-V IV', 'CR-V V', 'CR-V VI'], 'Mitsubishi': ['Outlander I', 'Outlander II', 'Outlander III', 'Lancer IX', 'Lancer X', 'Pajero III', 'Pajero IV'], 'Suzuki': ['Vitara LY', 'Grand Vitara JT', 'SX4 S-Cross', 'Swift III', 'Swift IV', 'Swift V'], 'Fiat': ['Doblo I', 'Doblo II', 'Ducato X250', 'Ducato X290', 'Tipo 356', 'Panda II', 'Panda III'], 'Subaru': ['Forester SG', 'Forester SH', 'Forester SJ', 'Forester SK', 'Outback BP', 'Outback BR', 'Outback BS', 'Outback BT']}
 for _brand, _variants in _MODEL_VARIANTS.items():
@@ -148,7 +180,7 @@ FUEL = ["Бензин", "Дизель", "Гібрид", "Електро", "Га�
 GEARBOX = ["Механіка", "Автомат", "DSG", "Варіатор", "Робот"]
 BODY = [
     "Седан", "Хетчбек", "Універсал", "Купе", "Кабріолет", "Ліфтбек", "Фастбек", "Тарга", "Родстер",
-    "Кросовер", "Позашляховик", "Мінівен", "Мікроавтобус", "Фургон", "Пікап", "Універсал/фургон", "Компактвен"
+    "Кросовер", "Позашляховик", "Мінівен", "Мікроавтобус", "Фургон", "Пікап", "Універсал/фургон", "Компактвен", "Причіп", "Напівпричіп"
 ]
 DRIVE = ["Передній", "Задній", "Повний"]
 

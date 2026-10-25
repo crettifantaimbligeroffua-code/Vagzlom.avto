@@ -128,47 +128,68 @@ def _async_send_to_telegram(car_id, delay=60):
             f"Привеземо за найкращою ціною в Україні 🤝"
         )
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMediaGroup"
-    files = {}
-    media = []
+    # Надсилаємо ВСІ фото: Telegram дозволяє до 10 фото в одній медіагрупі.
+    # Якщо фото більше 10 — ділимо на групи, не відкидаючи решту.
+    valid_paths = [path for path in photo_paths if path and path.exists()]
+    if not valid_paths:
+        text_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        try:
+            resp = requests.post(text_url, data={"chat_id": CHANNEL_ID, "text": caption}, timeout=30)
+            if not resp.ok:
+                print(f"Telegram sendMessage error: {resp.status_code} {resp.text[:500]}")
+        except Exception as e:
+            print(f"Помилка публікації тексту в Telegram: {e}")
+        return
 
-    try:
-        for i, path in enumerate(photo_paths[:10]):
-            if path and path.exists():
-                file_key = f"photo{i}"
-                files[file_key] = open(path, "rb")
-                item = {
-                    "type": "photo",
-                    "media": f"attach://{file_key}"
-                }
-                if i == 0:
-                    item["caption"] = caption[:1024]
-                media.append(item)
+    for batch_start in range(0, len(valid_paths), 10):
+        batch = valid_paths[batch_start:batch_start + 10]
+        is_first_batch = batch_start == 0
+        files = {}
+        try:
+            if len(batch) == 1:
+                # sendMediaGroup вимагає щонайменше два елементи.
+                path = batch[0]
+                with open(path, "rb") as photo_file:
+                    data = {"chat_id": CHANNEL_ID}
+                    if is_first_batch:
+                        data["caption"] = caption[:1024]
+                    resp = requests.post(
+                        f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                        data=data, files={"photo": photo_file}, timeout=90
+                    )
+            else:
+                media = []
+                for i, path in enumerate(batch):
+                    file_key = f"photo{i}"
+                    files[file_key] = open(path, "rb")
+                    item = {"type": "photo", "media": f"attach://{file_key}"}
+                    if is_first_batch and i == 0:
+                        item["caption"] = caption[:1024]
+                    media.append(item)
+                resp = requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendMediaGroup",
+                    data={"chat_id": CHANNEL_ID, "media": json.dumps(media, ensure_ascii=False)},
+                    files=files, timeout=120
+                )
 
-        if not media:
-            text_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-            requests.post(text_url, data={"chat_id": CHANNEL_ID, "text": caption}, timeout=30)
-            return
-
-        data = {
-            "chat_id": CHANNEL_ID,
-            "media": json.dumps(media, ensure_ascii=False)
-        }
-
-        resp = requests.post(url, data=data, files=files, timeout=90)
-        res_json = resp.json()
-        if not res_json.get("ok"):
-            print(f"Помилка Telegram API: {res_json}")
-        else:
-            print(f"Пост авто {car_id} успішно надіслано в Telegram!")
-    except Exception as e:
-        print(f"Помилка публікації в Telegram: {e}")
-    finally:
-        for f in files.values():
             try:
-                f.close()
-            except:
-                pass
+                result = resp.json()
+            except Exception:
+                result = {"ok": False, "description": resp.text[:500]}
+            if not resp.ok or not result.get("ok"):
+                print(f"Помилка Telegram API (фото {batch_start + 1}-{batch_start + len(batch)}): {result}")
+                # Не продовжуємо, щоб не створювати частково дубльовані публікації після помилки.
+                break
+            print(f"Telegram: надіслано фото {batch_start + 1}-{batch_start + len(batch)} з {len(valid_paths)} для авто {car_id}.")
+        except Exception as e:
+            print(f"Помилка публікації фото в Telegram: {e}")
+            break
+        finally:
+            for f in files.values():
+                try:
+                    f.close()
+                except Exception:
+                    pass
 
 def schedule_new_car(car_id):
     try:
