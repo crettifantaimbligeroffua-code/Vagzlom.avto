@@ -7,7 +7,8 @@ from pathlib import Path
 import sqlite3
 
 BASE = Path(__file__).resolve().parent
-UPLOAD_DIR = BASE / "static" / "uploads"
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE))).expanduser().resolve()
+UPLOAD_DIR = DATA_DIR / "uploads"
 
 DEFAULT_TEMPLATE = """🔥 {brand} {model} {engine_info} {year}
 🪪 {vin}
@@ -42,7 +43,7 @@ def _async_send_to_telegram(car_id, delay=60):
         print("Telegram Bot Token або Channel ID не задані!")
         return
 
-    db_path = BASE / "vagzlumauto.db"
+    db_path = DATA_DIR / "vagzlumauto.db"
     if not db_path.exists():
         print(f"База даних не знайдена: {db_path}")
         return

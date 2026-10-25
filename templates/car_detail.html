@@ -9,7 +9,7 @@
     <div class="gallery" style="background:#0c1629; padding:15px; border-radius:14px; border:1px solid #24334d;">
       {% if photos %}
         <div class="main-photo-wrap" style="position:relative; width:100%; height:420px; overflow:hidden; border-radius:10px; background:#050b18;">
-          <img id="mainCarPhoto" src="{{ url_for('static', filename='uploads/' + photos[0].filename) }}" alt="{{ car.brand }} {{ car.model }}" style="width:100%; height:100%; object-fit:contain; object-position:center; display:block;">
+          <img id="mainCarPhoto" src="{{ url_for('uploaded_file', filename=photos[0].filename) }}" alt="{{ car.brand }} {{ car.model }}" style="width:100%; height:100%; object-fit:contain; object-position:center; display:block;">
           {% if photos|length > 1 %}
             <button class="gallery-prev" type="button" onclick="prevPhoto()" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(12,22,41,0.85); color:#fff; border:1px solid #3d5275; font-size:24px; cursor:pointer;">‹</button>
             <button class="gallery-next" type="button" onclick="nextPhoto()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(12,22,41,0.85); color:#fff; border:1px solid #3d5275; font-size:24px; cursor:pointer;">›</button>
@@ -20,7 +20,7 @@
           <div class="thumbs" id="photoThumbs" style="display:flex; gap:10px; margin-top:12px; overflow-x:auto; padding-bottom:5px;">
             {% for p in photos %}
               <button type="button" class="thumb {{ 'active' if loop.first else '' }}" onclick="setPhoto({{ loop.index0 }})" style="flex:0 0 75px; height:55px; border-radius:6px; overflow:hidden; border:2px solid #24334d; padding:0; cursor:pointer; background:#000;">
-                <img src="{{ url_for('static', filename='uploads/' + p.filename) }}" alt="Фото {{ loop.index }}" style="width:100%; height:100%; object-fit:cover;">
+                <img src="{{ url_for('uploaded_file', filename=p.filename) }}" alt="Фото {{ loop.index }}" style="width:100%; height:100%; object-fit:cover;">
               </button>
             {% endfor %}
           </div>

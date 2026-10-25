@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -6,15 +6,43 @@ from pathlib import Path
 import uuid
 import os
 import logging
+import threading
+import time
+import requests
 from social_publishing import schedule_new_car
 
 BASE = Path(__file__).resolve().parent
-DB_PATH = BASE / "vagzlumauto.db"
-UPLOAD_DIR = BASE / "static" / "uploads"
+# Render: set DATA_DIR=/var/data and attach a persistent disk mounted at /var/data.
+# Then the SQLite database, car photos, and saved posting settings survive deploys.
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(BASE))).expanduser().resolve()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = DATA_DIR / "vagzlumauto.db"
+UPLOAD_DIR = DATA_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# One-time migration: when a Render disk is first attached, copy the previous
+# SQLite database and locally stored uploads into persistent storage if present.
+LEGACY_DB_PATH = BASE / "vagzlumauto.db"
+LEGACY_UPLOAD_DIR = BASE / "static" / "uploads"
+if DB_PATH != LEGACY_DB_PATH and not DB_PATH.exists() and LEGACY_DB_PATH.exists():
+    import shutil
+    shutil.copy2(LEGACY_DB_PATH, DB_PATH)
+if UPLOAD_DIR.resolve() != LEGACY_UPLOAD_DIR.resolve() and LEGACY_UPLOAD_DIR.exists():
+    import shutil
+    for legacy_file in LEGACY_UPLOAD_DIR.iterdir():
+        if legacy_file.is_file():
+            target_file = UPLOAD_DIR / legacy_file.name
+            if not target_file.exists():
+                shutil.copy2(legacy_file, target_file)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret-key")
+# Keep admin/editor login for 30 days so the user does not need to sign in on every visit.
+from datetime import timedelta
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("RENDER", "").lower() == "true"
 app.config["MAX_CONTENT_LENGTH"] = 512 * 1024 * 1024
 from config import *
 
@@ -111,6 +139,11 @@ def require_role(*roles):
 @app.context_processor
 def inject_globals():
     return {"current_user": current_user(), "roles": ROLES, "site": SITE, "phones": PHONES, "ui": TEXT, "nav": NAV, "detail_field_map": DETAIL_FIELD_MAP, "quick_picker": QUICK_PICKER, "main_fields": MAIN_FIELDS, "detail_fields": DETAIL_FIELDS, "max_photos": MAX_PHOTOS}
+
+@app.route("/uploads/<path:filename>")
+def uploaded_file(filename):
+    # Serve uploaded photos from persistent storage, not the disposable app directory.
+    return send_from_directory(UPLOAD_DIR, filename)
 
 @app.route("/")
 def home():
@@ -210,6 +243,7 @@ def login():
         user = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
         conn.close()
         if user and check_password_hash(user["password_hash"], password):
+            session.permanent = True
             session["user_id"] = user["id"]
             flash("Ви увійшли на сайт.", "success")
             return redirect(url_for("home"))
@@ -496,6 +530,42 @@ def privacy():
     return render_template("privacy.html")
 
 init_db()
+
+# Lightweight self-ping bot: requests the public site every 7 minutes by default.
+# Set SITE_URL (or rely on Render's RENDER_EXTERNAL_URL) to the public base URL.
+# This is a best-effort keep-awake helper, not a substitute for persistent storage
+# and not a guarantee against Render free-tier sleep/restarts.
+@app.route("/healthz")
+def healthz():
+    return {"status": "ok"}, 200
+
+def _start_self_ping_bot():
+    site_url = (os.environ.get("SITE_URL") or os.environ.get("RENDER_EXTERNAL_URL") or "").strip().rstrip("/")
+    if not site_url:
+        app.logger.warning("Self-ping bot is not configured: set SITE_URL or RENDER_EXTERNAL_URL")
+        return
+    try:
+        interval_minutes = float(os.environ.get("SELF_PING_INTERVAL_MINUTES", "7"))
+    except (TypeError, ValueError):
+        interval_minutes = 7.0
+    interval_minutes = min(10.0, max(5.0, interval_minutes))
+    ping_url = site_url + "/healthz"
+
+    def _loop():
+        # First ping after the interval to avoid delaying startup.
+        while True:
+            time.sleep(interval_minutes * 60)
+            try:
+                response = requests.get(ping_url, timeout=20)
+                app.logger.info("Self-ping bot: GET %s -> %s", ping_url, response.status_code)
+            except requests.RequestException as exc:
+                app.logger.warning("Self-ping bot request failed: %s", exc)
+
+    thread = threading.Thread(target=_loop, name="site-self-ping", daemon=True)
+    thread.start()
+    app.logger.info("Self-ping bot started; interval=%.1f minutes; URL=%s", interval_minutes, ping_url)
+
+_start_self_ping_bot()
 
 if __name__ == "__main__":
     app.run(
