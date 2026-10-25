@@ -520,3 +520,8 @@ def tiktok_privacy_verification_file(filename):
 @app.route("/tiktok7BKQXulga15PQpSeOTpnmAvCjxnADE48.txt")
 def tiktok_root_verification():
     return send_from_directory(BASE / "static", "tiktok7BKQXulga15PQpSeOTpnmAvCjxnADE48.txt", mimetype="text/plain")
+
+
+@app.route("/tiktokmHQZovamLjLSVETbphwnm5UGR98xMRDF.txt")
+def tiktok_root_verification_mhq():
+    return send_from_directory(BASE / "static", "tiktokmHQZovamLjLSVETbphwnm5UGR98xMRDF.txt", mimetype="text/plain")
