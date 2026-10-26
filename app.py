@@ -586,7 +586,7 @@ def privacy():
 
 init_db()
 
-# Lightweight self-ping bot: requests the public site every 7 minutes by default.
+# Lightweight self-ping bot: requests the public site every 5 minutes by default.
 # Set SITE_URL (or rely on Render's RENDER_EXTERNAL_URL) to the public base URL.
 # This is a best-effort keep-awake helper, not a substitute for persistent storage
 # and not a guarantee against Render free-tier sleep/restarts.
@@ -600,9 +600,9 @@ def _start_self_ping_bot():
         app.logger.warning("Self-ping bot is not configured: set SITE_URL or RENDER_EXTERNAL_URL")
         return
     try:
-        interval_minutes = float(os.environ.get("SELF_PING_INTERVAL_MINUTES", "7"))
+        interval_minutes = float(os.environ.get("SELF_PING_INTERVAL_MINUTES", "5"))
     except (TypeError, ValueError):
-        interval_minutes = 7.0
+        interval_minutes = 5.0
     interval_minutes = min(10.0, max(5.0, interval_minutes))
     ping_url = site_url + "/healthz"
 
