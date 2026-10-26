@@ -1,13 +1,12 @@
-БОТ ПЕРЕВІРКИ САЙТУ КОЖНІ 5 ХВИЛИН
+SELF-PING BOT (best effort)
 
-У цій версії є два механізми:
-1. Внутрішній self-ping у Flask (кожні 5 хвилин, поки процес сайту працює).
-2. GitHub Actions workflow у .github/workflows/keep-alive.yml — зовнішня перевірка кожні 5 хвилин. Вона працює незалежно від процесу Render.
+The app now has a /healthz endpoint and a background bot that requests it every 7 minutes by default.
+The interval is configurable with SELF_PING_INTERVAL_MINUTES and is clamped to 5-10 minutes.
+The public URL is read from SITE_URL, or Render's RENDER_EXTERNAL_URL.
 
-Що потрібно зробити:
-- Розпакуй ZIP.
-- Завантаж вміст папки repair_now у корінь GitHub-репозиторію, обов'язково разом із прихованою папкою .github. Якщо GitHub не показує .github, створи файл .github/workflows/keep-alive.yml вручну з вмістом з архіву.
-- У GitHub відкрий вкладку Actions і, якщо буде кнопка, натисни Enable workflows.
-- У Actions перевір, що workflow Keep Render site awake запускається кожні 5 хвилин.
+Render setup:
+- If SITE_URL is already configured, it should be the public base URL of this same service.
+- Otherwise Render usually provides RENDER_EXTERNAL_URL automatically.
+- Optional: set SELF_PING_INTERVAL_MINUTES=7.
 
-Перевірка викликає /healthz, а не змінює дані сайту. Вона може зменшити ймовірність засинання, але не гарантує безперервну роботу: розклад GitHub Actions може затримуватися, а Render може обмежувати роботу безкоштовного сервісу. Це не замінює PostgreSQL чи постійне сховище фотографій.
+Important: a self-ping loop is only best-effort. If Render stops the service/process, the loop stops too, so this does not guarantee the service will stay awake on a free plan. It also does NOT make local SQLite/uploads persistent. Use persistent storage or a managed database for that.
