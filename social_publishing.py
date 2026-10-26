@@ -82,12 +82,12 @@ def _load_car_and_photos(car_id):
         conn.close()
 
 
-def _send_telegram(car_id, delay=30):
+def _send_telegram(car_id, delay=3):
     time.sleep(max(0, delay))
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     channel_id = os.getenv("TELEGRAM_CHANNEL_ID", "").strip()
     if not token or not channel_id:
-        print("Telegram: пропущено — TELEGRAM_BOT_TOKEN або TELEGRAM_CHANNEL_ID не задано в Render Environment.", flush=True)
+        print(f"Telegram: пропущено — відсутня змінна {'TELEGRAM_BOT_TOKEN' if not token else 'TELEGRAM_CHANNEL_ID'} у Render Environment.", flush=True)
         return
 
     site_url = os.getenv("SITE_URL", "https://vagzlom-avto3.onrender.com").strip().rstrip("/")
@@ -184,9 +184,9 @@ def schedule_new_car(car_id):
     """Schedule asynchronous Telegram publication 30 seconds after saving the listing."""
     try:
         import threading
-        thread = threading.Thread(target=_send_telegram, args=(car_id, 30), daemon=True)
+        thread = threading.Thread(target=_send_telegram, args=(car_id, 3), daemon=True)
         thread.start()
-        print(f"Telegram: заплановано публікацію авто id={car_id} через 30 секунд.", flush=True)
+        print(f"Telegram: заплановано публікацію авто id={car_id} через 3 секунди.", flush=True)
     except Exception:
         import traceback
         print("Telegram: не вдалося запустити фонову публікацію.", flush=True)

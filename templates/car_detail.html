@@ -9,7 +9,7 @@
     <div class="gallery" style="background:#0c1629; padding:15px; border-radius:14px; border:1px solid #24334d;">
       {% if photos %}
         <div class="main-photo-wrap" style="position:relative; width:100%; height:420px; overflow:hidden; border-radius:10px; background:#050b18;">
-          <img id="mainCarPhoto" src="{{ url_for('uploaded_file', filename=photos[0].filename) }}" alt="{{ car.brand }} {{ car.model }}" style="width:100%; height:100%; object-fit:contain; object-position:center; display:block;">
+          <img id="mainCarPhoto" src="{{ url_for('uploaded_file', filename=photos[0].filename) }}" alt="{{ car.brand }} {{ car.model }}" onclick="openPhotoViewer()" title="Натисніть, щоб збільшити" style="width:100%; height:100%; object-fit:contain; object-position:center; display:block; cursor:zoom-in;">
           {% if photos|length > 1 %}
             <button class="gallery-prev" type="button" onclick="prevPhoto()" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(12,22,41,0.85); color:#fff; border:1px solid #3d5275; font-size:24px; cursor:pointer;">‹</button>
             <button class="gallery-next" type="button" onclick="nextPhoto()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; background:rgba(12,22,41,0.85); color:#fff; border:1px solid #3d5275; font-size:24px; cursor:pointer;">›</button>
@@ -85,18 +85,38 @@
   </div>
 </section>
 
-{% if photos|length > 1 %}
+<div id="photoViewer" class="photo-viewer" aria-hidden="true">
+  <button type="button" class="pv-close" onclick="closePhotoViewer()" aria-label="Закрити">×</button>
+  <button type="button" class="pv-prev" onclick="viewerPrev()" aria-label="Попереднє фото">‹</button>
+  <div class="pv-stage" id="pvStage"><img id="viewerPhoto" alt="Збільшене фото автомобіля"></div>
+  <button type="button" class="pv-next" onclick="viewerNext()" aria-label="Наступне фото">›</button>
+  <div class="pv-tools"><button type="button" onclick="zoomPhoto(0.25)">＋</button><button type="button" onclick="zoomPhoto(-0.25)">−</button><button type="button" onclick="resetPhotoZoom()">Скинути масштаб</button><span id="viewerCount">1 / {{ photos|length }}</span></div>
+  <div class="pv-help">Коліщатко миші або +/− — масштаб; збільшене фото можна перетягувати</div>
+</div>
+<style>
+.photo-viewer{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.96);align-items:center;justify-content:center;touch-action:none}.photo-viewer.open{display:flex}
+.pv-stage{position:absolute;inset:55px 70px 100px;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:grab}.pv-stage:active{cursor:grabbing}
+#viewerPhoto{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center center;user-select:none;-webkit-user-drag:none}
+.pv-close,.pv-prev,.pv-next{position:absolute;z-index:2;border:1px solid #6a7890;background:rgba(20,32,52,.9);color:white;border-radius:50%;cursor:pointer;display:grid;place-items:center}
+.pv-close{right:18px;top:14px;width:46px;height:46px;font-size:32px}.pv-prev,.pv-next{top:50%;transform:translateY(-50%);width:46px;height:46px;font-size:32px}.pv-prev{left:14px}.pv-next{right:14px}
+.pv-tools{position:absolute;bottom:35px;display:flex;align-items:center;justify-content:center;gap:9px;z-index:2;flex-wrap:wrap;padding:8px 12px;border-radius:14px;background:rgba(20,32,52,.96);color:white}.pv-tools button{border:1px solid #536987;background:#172844;color:white;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:16px}.pv-help{position:absolute;bottom:9px;color:#b9c6d9;font-size:12px;text-align:center;padding:0 10px}
+@media(max-width:600px){.pv-stage{inset:60px 5px 115px}.pv-prev,.pv-next{width:34px;height:34px;font-size:25px}.pv-prev{left:4px}.pv-next{right:4px}.pv-tools{bottom:38px;gap:6px}.pv-tools button{padding:7px 9px}.pv-help{font-size:10px}}
+</style>
 <script>
-  const carPhotos={{ photos|map(attribute='filename')|list|tojson }};
-  let photoIndex=0;
-  function setPhoto(i){
-    photoIndex=i;
-    document.getElementById('mainCarPhoto').src={{ url_for('static',filename='uploads/')|tojson }}+carPhotos[i];
-    document.getElementById('galleryCount').textContent=(i+1)+' / '+carPhotos.length;
-    document.querySelectorAll('.thumb').forEach((x,n)=>x.style.borderColor=(n===i?'#31d77c':'#24334d'));
-  }
-  function nextPhoto(){setPhoto((photoIndex+1)%carPhotos.length)}
-  function prevPhoto(){setPhoto((photoIndex-1+carPhotos.length)%carPhotos.length)}
+const carPhotoNames = {{ photos|map(attribute='filename')|list|tojson }};
+const carPhotoUrls = carPhotoNames.map(name => '/uploads/' + encodeURIComponent(name));
+let photoIndex=0, viewerScale=1, panX=0, panY=0, dragging=false, dragX=0, dragY=0;
+const mainPhoto=document.getElementById('mainCarPhoto'), viewer=document.getElementById('photoViewer'), viewerPhoto=document.getElementById('viewerPhoto'), pvStage=document.getElementById('pvStage');
+function updatePhoto(i){if(!carPhotoUrls.length)return;photoIndex=(i+carPhotoUrls.length)%carPhotoUrls.length;if(mainPhoto)mainPhoto.src=carPhotoUrls[photoIndex];if(viewer.classList.contains('open'))viewerPhoto.src=carPhotoUrls[photoIndex];const count=document.getElementById('galleryCount');if(count)count.textContent=(photoIndex+1)+' / '+carPhotoUrls.length;const vc=document.getElementById('viewerCount');if(vc)vc.textContent=(photoIndex+1)+' / '+carPhotoUrls.length;document.querySelectorAll('.thumb').forEach((x,n)=>{x.style.borderColor=n===photoIndex?'#31d77c':'#24334d';x.classList.toggle('active',n===photoIndex)});resetPhotoZoom()}
+function setPhoto(i){updatePhoto(i)} function nextPhoto(){updatePhoto(photoIndex+1)} function prevPhoto(){updatePhoto(photoIndex-1)}
+function openPhotoViewer(){if(!carPhotoUrls.length)return;viewer.classList.add('open');viewer.setAttribute('aria-hidden','false');viewerPhoto.src=carPhotoUrls[photoIndex];document.body.style.overflow='hidden';resetPhotoZoom()}
+function closePhotoViewer(){viewer.classList.remove('open');viewer.setAttribute('aria-hidden','true');document.body.style.overflow=''}
+function viewerNext(){updatePhoto(photoIndex+1)} function viewerPrev(){updatePhoto(photoIndex-1)}
+function applyPhotoTransform(){viewerPhoto.style.transform=`translate(${panX}px,${panY}px) scale(${viewerScale})`}
+function zoomPhoto(delta){viewerScale=Math.max(1,Math.min(5,viewerScale+delta));if(viewerScale===1){panX=0;panY=0}applyPhotoTransform()}
+function resetPhotoZoom(){viewerScale=1;panX=0;panY=0;applyPhotoTransform()}
+viewerPhoto.addEventListener('click',()=>{if(viewerScale===1)zoomPhoto(.5)});pvStage.addEventListener('wheel',e=>{e.preventDefault();zoomPhoto(e.deltaY<0?.25:-.25)},{passive:false});
+pvStage.addEventListener('pointerdown',e=>{if(viewerScale<=1)return;dragging=true;dragX=e.clientX-panX;dragY=e.clientY-panY;pvStage.setPointerCapture(e.pointerId)});pvStage.addEventListener('pointermove',e=>{if(!dragging)return;panX=e.clientX-dragX;panY=e.clientY-dragY;applyPhotoTransform()});pvStage.addEventListener('pointerup',()=>dragging=false);pvStage.addEventListener('pointercancel',()=>dragging=false);
+viewer.addEventListener('click',e=>{if(e.target===viewer)closePhotoViewer()});document.addEventListener('keydown',e=>{if(!viewer.classList.contains('open'))return;if(e.key==='Escape')closePhotoViewer();if(e.key==='ArrowRight')viewerNext();if(e.key==='ArrowLeft')viewerPrev();if(e.key==='+'||e.key==='=')zoomPhoto(.25);if(e.key==='-')zoomPhoto(-.25)});
 </script>
-{% endif %}
 {% endblock %}
