@@ -381,7 +381,7 @@ def add_car():
                                    fuel_options=FUEL, gearbox_options=GEARBOX, body_options=BODY,
                                    drive_options=DRIVE, existing_cars=get_existing_cars(), detail_values={k: fields.get(k, "") for k in DETAIL_FIELD_MAP})
         conn.commit(); conn.close()
-        # Auto-publish this new listing after 5 minutes; credentials are configured as environment variables.
+        # Auto-publish this new listing after 30 seconds; credentials are configured as environment variables.
         schedule_new_car(car_id)
         flash("Автомобіль додано.", "success")
         return redirect(url_for("add_car"))
