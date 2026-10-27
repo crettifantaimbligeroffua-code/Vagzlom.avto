@@ -87,13 +87,21 @@
 
 {% if photos|length > 1 %}
 <script>
+  // Use the same /uploads/<filename> route as the thumbnails and initial image.
+  // Uploaded images may be stored in PostgreSQL, not in static/uploads.
   const carPhotos={{ photos|map(attribute='filename')|list|tojson }};
+  const carPhotoUrls=[{% for p in photos %}{{ url_for('uploaded_file', filename=p.filename)|tojson }}{% if not loop.last %},{% endif %}{% endfor %}];
   let photoIndex=0;
   function setPhoto(i){
-    photoIndex=i;
-    document.getElementById('mainCarPhoto').src={{ url_for('static',filename='uploads/')|tojson }}+carPhotos[i];
-    document.getElementById('galleryCount').textContent=(i+1)+' / '+carPhotos.length;
-    document.querySelectorAll('.thumb').forEach((x,n)=>x.style.borderColor=(n===i?'#31d77c':'#24334d'));
+    photoIndex=(i+carPhotoUrls.length)%carPhotoUrls.length;
+    const mainPhoto=document.getElementById('mainCarPhoto');
+    mainPhoto.onerror=function(){ this.alt='Не вдалося завантажити фото'; };
+    mainPhoto.src=carPhotoUrls[photoIndex];
+    document.getElementById('galleryCount').textContent=(photoIndex+1)+' / '+carPhotoUrls.length;
+    document.querySelectorAll('#photoThumbs .thumb').forEach((x,n)=>{
+      x.style.borderColor=(n===photoIndex?'#31d77c':'#24334d');
+      x.classList.toggle('active',n===photoIndex);
+    });
   }
   function nextPhoto(){setPhoto((photoIndex+1)%carPhotos.length)}
   function prevPhoto(){setPhoto((photoIndex-1+carPhotos.length)%carPhotos.length)}
